@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Check if all 4 variables were provided as command line arguments
+if [ $# -ne 4 ]
+then
+    echo "Error: 4 arguments required"
+    exit 1
+fi
+
+# Assign the input variables to variables
+day_rate=$1
+night_rate=$2
+stand_charge=$3
+annual_kwh=$4
+
+# Calculate the annual cost based on only using the daytime rate
+day_cost=$(echo "($day_rate * $annual_kwh / 100) + ($stand_charge / 100  * 365)" | bc -l)
+
+# Calculate the annual cost based on only using the night-time rate
+night_cost=$(echo "($night_rate * $annual_kwh / 100) + ($stand_charge / 100  * 365)" | bc -l)
+
+# Calculate the total energy savings
+energy_savings=$(echo "$day_cost - $night_cost" | bc -l)
+
+# Print the results
+echo "Annual cost using daytime rate: £$day_cost"
+echo "Annual cost using night-time rate: £$night_cost"
+echo "Total energy savings: £$energy_savings"
+
