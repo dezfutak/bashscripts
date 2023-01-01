@@ -1,0 +1,35 @@
+#!/bin/bash
+#Created by ChatGPT with slight human modification
+#Run the script via:
+#chmod +x lighttrail && ./lighttrail nameofvideofile.mp4
+
+# Check if the required software is installed
+if ! command -v ffmpeg &> /dev/null
+then
+    echo "Error: ffmpeg is not installed. Please install it and try again."
+    exit 1
+fi
+
+if ! command -v convert &> /dev/null
+then
+    echo "Error: convert (part of the ImageMagick suite) is not installed. Please install it and try again."
+    exit 1
+fi
+
+# Extract the frames from the video
+mkdir -p frames
+ffmpeg -i $1 -vf fps=20 frames/frame_%04d.jpg
+
+# Create a blank image to composite the frames onto
+convert -size 1920x1080 xc:black composite.jpg
+
+# Iterate through the frames and composite them onto the blank image
+for f in frames/*.jpg
+do
+    convert composite.jpg "$f" -gravity center -compose lighten -composite composite.jpg
+done
+
+# Clean up
+rm -r frames
+
+echo "Done. The light trail photograph has been saved as composite.jpg."
