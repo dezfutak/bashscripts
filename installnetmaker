@@ -1,1 +1,49 @@
+#!/bin/bash
+#Adapted from:
+#  https://wiki.opensourceisawesome.com/books/netmaker-for-remote-network-access-via-wireguard/page/setting-up-a-remote-access-wireguard-vpn-with-netmaker
+#& https://docs.netmaker.org/quick-start.html
+#D Futak 2023. Feel free to fork/use this script
 
+
+#FFI, watch these tutorials (especially the first):
+#https://youtu.be/CGw4Kc424VE & https://youtu.be/X-BYDYoM_3w
+
+#INSTRUCTIONS
+#Create two files, one called:
+#serveremail => put your desired Netmaker email address in a single line in this file
+#serverdomain => put your Netmaker domain in a single line in this file (can be a TLD or subdomain)
+
+#Then run this script.
+
+
+apt update && apt -y upgrade
+echo "Probably you'll need to reboot now, then comment out the first couple of lines of this script (the apt update & this line!), and continue after the reboot by running the script again. There's a much more elegant way to do this, so feel free to fork & improve this script!"
+
+wget https://gitlab.com/bmcgonag/docker_installs/-/raw/main/install_docker_nproxyman.sh
+chmod +x install_docker_nproxyman.sh
+./install_docker_nproxyman.sh
+apt -y install wireguard
+
+ufw allow proto tcp from any to any port 443 && sudo ufw allow 51821:51830/udp
+iptables --policy FORWARD ACCEPT
+
+
+externalip=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
+generatedkey=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 30 ; echo '')
+email=$(cat /root/serveremail)
+basedomain=$(cat /root/serverdomain)
+
+mqttadminpassword=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 30 ; echo '')
+wget -O docker-compose.yml https://raw.githubusercontent.com/gravitl/netmaker/master/compose/docker-compose.yml
+wget -O Caddyfile https://raw.githubusercontent.com/gravitl/netmaker/master/docker/Caddyfile
+sed -i "s/NETMAKER_BASE_DOMAIN/${basedomain}/g" docker-compose.yml
+sed -i "s/NETMAKER_BASE_DOMAIN/${basedomain}/g" /root/Caddyfile
+sed -i "s/SERVER_PUBLIC_IP/${externalip}/g" docker-compose.yml
+sed -i "s/YOUR_EMAIL/${email}/g" docker-compose.yml
+sed -i "s/YOUR_EMAIL/${email}/g" Caddyfile
+sed -i "s/REPLACE_MASTER_KEY/${generatedkey}/g" docker-compose.yml
+sed -i "s/REPLACE_MQ_ADMIN_PASSWORD/${mqttadminpassword}/g" docker-compose.yml
+wget -O /root/mosquitto.conf https://raw.githubusercontent.com/gravitl/netmaker/master/docker/mosquitto.conf
+wget -q -O /root/wait.sh https://raw.githubusercontent.com/gravitl/netmaker/develop/docker/wait.sh
+chmod +x wait.sh
+docker-compose up -d
