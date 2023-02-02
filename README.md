@@ -19,4 +19,4 @@
  - Create two files, one called:
  - serveremail => put your desired Netmaker email address in a single line in this file
  - serverdomain => put your Netmaker domain in a single line in this file (can be a TLD or subdomain)
-  - Then run this script via bash installnetmaker (or chmod +x netmaker && ./netmaker)
+  - Then run this script via bash installnetmaker (or chmod +x installnetmaker && ./installnetmaker)
